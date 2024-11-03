@@ -1,0 +1,6 @@
+IN A 
+IN B
+ADD A, B
+SUB B 1010
+OUT R
+WAIT
