@@ -103,6 +103,7 @@ def modifica_mif(conteudo):
         for item in conteudo:
             linhas.insert(content_index + 1, f"\t{endereco} : {item};\n")  
             endereco += 1
+            content_index += 1
 
         # Atualiza a linha de profundidade
         for index, linha in enumerate(linhas):
