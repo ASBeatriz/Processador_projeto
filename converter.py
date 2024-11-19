@@ -1,3 +1,5 @@
+# RESOLVER PROBLEMA DO TAB NO ASSEMBLY!!
+
 COMMAND_TO_BIN = {
     "ADD"   : "0000",
     "SUB"   : "0001",        
@@ -13,16 +15,31 @@ COMMAND_TO_BIN = {
     "MOV"   : "1011",        
     "IN"    : "1100",       
     "OUT"   : "1101",        
-    "WAIT"  : "1110",
+    "WAIT"  : "11100000",
     ''      : "1111", 
 }
 
-# Precisa ter 4 bits também, caso esteja no mesmo arquivo de memória
 VARIABLE_TO_BIN = {
-    "A" : "0000",
-    "B" : "0001",
-    "R" : "0010",
+      "AA"   :  "0000",
+      "BB"   :  "0001",
+      "RR"   :  "0010",
+      "AB"   :  "0011",
+      "BA"   :  "0100",
+      "AR"   :  "0101",
+      "RA"   :  "0110",
+      "BR"   :  "0111",
+      "RB"   :  "1000",
+    #   "A 10"   :  "1001", (casos tratados a parte)
+    #   "B 10"   :  "1010",
+    #   "R 10"   :  "1011",
+      "A" :  "1100",
+      "B" :  "1101",
+      "R" :  "1110",
+    #   "10" :  "1111", (só número)
 }
+
+#EXEMPLO: o valor 00010100 representa "SUB B, A"
+#EXEMPLO2: o valor 01101111 representa o JMP para algum endereço dado em decimal (armazenado em binário na linha seguinte do .mif)
 
 # função que completa as linhas para que todas tenham tamanho 3
 def make_all_items_len_three(assembly_splitted_rows):
@@ -56,21 +73,72 @@ def print_lista(lista):
     for item in lista:
         print(item)
 
-def lista_bin(lista_texto):
+'''
+Função que codifica os comando em assembly para binário. Recebe uma lista (matriz) 
+com os comandos separados e em texto e retorna uma lista com os comandos em binário 
+(uma palavra de 8 bits para cada linha do assembly). 
+'''
+def codifica_bin(lista_texto):
     listaB = []
+
+    loop_start = -1 # Armazena a linha do início do loop
+    contador = 1
     for item in lista_texto:
-        for i in range(len(item)):
-            comando = item[i]
-            if comando == '':
-                continue
-            if comando in COMMAND_TO_BIN:
-                listaB.append(COMMAND_TO_BIN[comando])
+        IR = '' # Variavel que armazena a instrução (comando + variaveis)
 
-            elif comando in VARIABLE_TO_BIN:
-                listaB.append(VARIABLE_TO_BIN[comando])
+        # Codifica os comandos
+        comando = item[0]
+        if comando in COMMAND_TO_BIN:
+            IR = COMMAND_TO_BIN[comando]
+        elif comando == "LOOP_START:":
+            IR = "11111111"     # Código para o início do LOOP (ignorado no vhdl)
+            loop_start = contador   
+            listaB.append(IR)
+            continue
+        elif comando == "END_LOOP:":
+            IR = "11111111"  
+            listaB.append(IR)
+            continue
+        else:
+            listaB.append("comando-nao-identificado")
 
+        # Codifica a combinação de variáveis
+        variaveis = item[1] + item[2]
+        if variaveis in VARIABLE_TO_BIN:
+            print("variaveis: " + variaveis)
+            IR = IR + VARIABLE_TO_BIN[variaveis]
+            listaB.append(IR)
+
+        # Caso em que há um imediato (número)
+        else:
+            indice = 2
+            if item[1] == "A":
+                IR = IR + "1001"
+
+            elif item[1] == "B":
+                IR = IR + "1010"
+
+            elif item[1] == "R":
+                IR = IR + "1011"
+            
+            else: # caso de ser só o imediato
+                IR = IR + "1111"
+                indice = 1
+
+            listaB.append(IR)
+
+            num_bin = 0
+            if item[1] == "LOOP_START":
+                num_bin = bin(loop_start)[2:]   # Pega o endereço (linha) do inicio do loop
             else:
-                listaB.append(comando)
+                num_bin = bin(int(item[indice]))[2:]
+                
+            num_bin = '{0:0>8}'.format(num_bin) # Garante que o número tenha 8 bits
+            # adiciona o número no endereço seguinte
+            listaB.append(num_bin) 
+        
+        contador = contador+1
+
     return listaB
 
 '''
@@ -123,6 +191,9 @@ def modifica_mif(conteudo):
 
 leitura_txt = ler_arquivo()
 print_lista(leitura_txt)
-leitura_bin = lista_bin(leitura_txt)
+leitura_bin = codifica_bin(leitura_txt)
 print_lista(leitura_bin)
 modifica_mif(leitura_bin)
+
+
+# OBS: ESSE CÓDIGO CONSIDERA QUE TODOS OS NÚMEROS PASSADO PELO ASSEMBLY ESTÃO EM DECIMAL (INCLUINDO ENDEREÇOS)
