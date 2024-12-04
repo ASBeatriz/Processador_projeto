@@ -1,1 +1,0 @@
-Para o bloco de RAM!! cuidado, depois devemos atualizar o caminho para o .mif dentro do wizard dela.
