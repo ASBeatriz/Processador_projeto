@@ -1,8 +1,0 @@
-STORE A, 2
-ADD B, A 
-SUB R, 16
-JMP 2   ;jump pra linha 2
-JMP B
-LOOP_START:
-ADD B, A
-JMP LOOP_START

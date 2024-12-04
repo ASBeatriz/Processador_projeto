@@ -1,0 +1,5 @@
+IN A
+IN B
+MOV R 0
+STORE R 255
+MOV R A
